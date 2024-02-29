@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract L2Rollup {
+    struct Transaction {
+        address from;
+        address to;
+        uint256 amount;
+    }
+
+    mapping(uint256 => Transaction) public transactions;
+    uint256 public currentBatch;
+    address public operator;
+
+    event TransactionSubmitted(address indexed from, address indexed to, uint256 amount, uint256 indexed batch);
+
+    modifier onlyOperator() {
+        require(msg.sender == operator, "Only the operator can call this function");
+        _;
+    }
+
+    constructor() {
+        operator = msg.sender;
+    }
+
+    function submitTransaction(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) external {
+        require(_from != address(0), "Invalid sender address");
+        require(_to != address(0), "Invalid recipient address");
+        require(_amount > 0, "Invalid amount");
+
+        transactions[currentBatch] = Transaction(_from, _to, _amount);
+        emit TransactionSubmitted(_from, _to, _amount, currentBatch);
+
+        currentBatch++;
+    }
+
+    function setOperator(address _operator) external onlyOperator {
+        operator = _operator;
+    }
+}
